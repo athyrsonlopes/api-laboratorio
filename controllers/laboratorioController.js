@@ -2,15 +2,7 @@ const Laboratorio = require('../models/Laboratorio');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
-
-exports.criar = async (req, res) => {
-  const { nome, descricao, capacidade } = req.body;
-  const foto = req.file.filename;
-
-  const lab = new Laboratorio({ nome, descricao, capacidade, foto });
-  await lab.save();
-  res.status(201).json(lab);
-};
+const axios = require('axios'); // <== importante
 
 exports.relatorio = async (req, res) => {
   try {
@@ -21,18 +13,23 @@ exports.relatorio = async (req, res) => {
 
     doc.pipe(stream);
 
-    labs.forEach(lab => {
+    for (const lab of labs) {
       doc.fontSize(14).text(`Nome: ${lab.nome}`);
       doc.fontSize(12).text(`Descrição: ${lab.descricao}`);
       doc.text(`Capacidade: ${lab.capacidade}`);
 
-      const fotoPath = path.join(__dirname, '..', 'uploads', lab.foto);
-      if (fs.existsSync(fotoPath)) {
-        doc.image(fotoPath, { width: 100 });
+      // Tentar baixar a imagem da URL
+      try {
+        const response = await axios.get(lab.foto, { responseType: 'arraybuffer' });
+        const imageBuffer = Buffer.from(response.data, 'binary');
+        doc.image(imageBuffer, { width: 100 });
+      } catch (imgErr) {
+        doc.text('Erro ao carregar imagem.');
+        console.error(`Erro ao carregar imagem do laboratório ${lab.nome}:`, imgErr.message);
       }
 
       doc.moveDown();
-    });
+    }
 
     doc.end();
 
@@ -44,6 +41,7 @@ exports.relatorio = async (req, res) => {
     res.status(500).json({ erro: 'Erro ao gerar relatório' });
   }
 };
+
 
 
 
