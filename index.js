@@ -5,6 +5,8 @@ const app = express();
 const authRoutes = require('./routes/authRoutes');
 const labRoutes = require('./routes/laboratorioRoutes');
 
+
+app.get('/', (req, res) => res.send('home'));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
@@ -19,4 +21,4 @@ mongoose.connect(process.env.MONGODB_URI)
   })
   .catch(err => console.error(err));
 
-module.exports = app; // para testes
+module.exports = app; 
