@@ -9,21 +9,22 @@ exports.criar = async (req, res) => {
   try {
     const { nome, descricao, capacidade } = req.body;
 
-    let fotoUrl = null;
-
-    if (req.file) {
-      const blob = await put(
-        req.file.originalname,
-        req.file.buffer,
-        {
-          access: 'public',
-        }
-      );
-
-      fotoUrl = blob.url;
+    if (!req.file) {
+      return res.status(400).json({ erro: 'A imagem é obrigatória.' });
     }
 
-    const lab = new Laboratorio({ nome, descricao, capacidade, foto: fotoUrl });
+    // upload para Vercel Blob
+    const blob = await put(req.file.originalname, req.file.buffer, {
+      access: 'public',
+    });
+
+    const lab = new Laboratorio({
+      nome,
+      descricao,
+      capacidade,
+      foto: blob.url,
+    });
+
     await lab.save();
     res.status(201).json(lab);
   } catch (err) {
