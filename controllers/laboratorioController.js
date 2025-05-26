@@ -13,7 +13,6 @@ exports.criar = async (req, res) => {
       return res.status(400).json({ erro: 'A imagem é obrigatória.' });
     }
 
-    // upload para Vercel Blob
     const blob = await put(req.file.originalname, req.file.buffer, {
       access: 'public',
     });
