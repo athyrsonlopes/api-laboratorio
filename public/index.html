@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notificações de Bloqueio (Simples)</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        #notificacoes {
+            list-style: none;
+            padding: 0;
+            border: 1px solid #ccc;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            text-align: left;
+            padding: 10px;
+        }
+        #notificacoes li {
+            padding: 5px 0;
+            border-bottom: 1px dashed #eee;
+        }
+        #notificacoes li:last-child {
+            border-bottom: none;
+        }
+        .alerta {
+            font-weight: bold;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>⚠️ Notificações de Bloqueio de Laboratório ⚠️</h1>
+    <p>As mensagens abaixo aparecerão em tempo real quando um laboratório for bloqueado.</p>
+
+    <ul id="notificacoes">
+        <li>Aguardando notificações...</li>
+    </ul>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+        const API_URL = 'http://localhost:3000'; 
+
+        const socket = io(API_URL);
+
+        const notificacoesUl = document.getElementById('notificacoes');
+
+        socket.on('connect', () => {
+            console.log('Frontend Muito Simples: Conectado ao servidor WebSocket!');
+            notificacoesUl.innerHTML = ''; 
+        });
+
+        socket.on('bloquear', (data) => {
+            const messageElement = document.createElement('li');
+            messageElement.innerHTML = `<span class="alerta">ALERTA:</span> Laboratório ${data.labId} foi BLOQUEADO! (${new Date(data.timestamp).toLocaleTimeString()})`;
+            notificacoesUl.appendChild(messageElement);
+            notificacoesUl.scrollTop = notificacoesUl.scrollHeight;
+        });
+
+        socket.on('connect_error', (err) => {
+            console.error('Frontend Muito Simples: Erro de conexão WebSocket:', err.message);
+            const errorElement = document.createElement('li');
+            errorElement.style.color = 'orange';
+            errorElement.textContent = `Erro de conexão: ${err.message}.`;
+            notificacoesUl.appendChild(errorElement);
+            notificacoesUl.scrollTop = notificacoesUl.scrollHeight;
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Frontend Muito Simples: Desconectado do servidor WebSocket.');
+            const disconnectElement = document.createElement('li');
+            disconnectElement.style.color = 'red';
+            disconnectElement.textContent = `Desconectado do servidor. Tentando reconectar...`;
+            notificacoesUl.appendChild(disconnectElement);
+            notificacoesUl.scrollTop = notificacoesUl.scrollHeight;
+        });
+    </script>
+</body>
+</html>

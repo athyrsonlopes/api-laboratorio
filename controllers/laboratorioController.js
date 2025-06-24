@@ -32,6 +32,43 @@ exports.criar = async (req, res) => {
   }
 };
 
+exports.listarTodos = async (req, res) => {
+  try {
+    const labs = await Laboratorio.find();
+    res.status(200).json(labs);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: 'Erro ao listar laboratórios' });
+  }
+};
+
+exports.excluir = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const lab = await Laboratorio.findById(id);
+    if (!lab) {
+      return res.status(404).json({ erro: 'Laboratório não encontrado.' });
+    }
+
+    if (lab.foto) {
+      try {
+        const { del } = require('@vercel/blob');
+        await del(lab.foto);
+        console.log(`Imagem ${lab.foto} excluída com sucesso do Vercel Blob.`);
+      } catch (blobErr) {
+        console.warn(`Aviso: Não foi possível excluir a imagem do Vercel Blob (${lab.foto}). Pode já não existir ou ter ocorrido um erro:`, blobErr);
+      }
+    }
+
+    await Laboratorio.findByIdAndDelete(id); // Exclui o laboratório do MongoDB
+    res.status(200).json({ mensagem: 'Laboratório excluído com sucesso!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: 'Erro ao excluir laboratório' });
+  }
+};
+
 exports.relatorio = async (req, res) => {
   try {
     const labs = await Laboratorio.find();
