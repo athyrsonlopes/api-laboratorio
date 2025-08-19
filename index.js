@@ -19,6 +19,7 @@ const io = socketIo(server, {
 const authRoutes = require('./routes/authRoutes');
 const laboratorioRoutes = require('./routes/laboratorioRoutes');
 
+
 app.get('/', (req, res) => res.send('Bem-vindo à API de Gerenciamento de Laboratórios!'));
 
 app.use(express.json());
@@ -68,8 +69,24 @@ app.get('/videoTutorial', (req, res) => {
     fs.createReadStream(videoPath).pipe(res);
   }
 });
-app.get('/temperaturaAtual', (req, res) => {
-    res.status(200).json({ temperature: currentLabTemperature, unit: '°C', labId: 'Laboratório Principal' });
+
+const Temperatura = require('./models/Temperatura');
+
+app.get('/temperaturaAtual', async (req, res) => {
+  try {
+    const ultimaLeitura = await Temperatura.findOne().sort({ timestamp: -1 });
+    if (!ultimaLeitura) {
+      return res.status(404).json({ erro: 'Nenhuma leitura de temperatura disponível.' });
+    }
+    res.status(200).json({ 
+        temperature: ultimaLeitura.temperatura, 
+        unit: '°C', 
+        labId: ultimaLeitura.laboratorio,
+        timestamp: ultimaLeitura.timestamp 
+    });
+  } catch(err) {
+    res.status(500).json({erro: 'Erro ao buscar temperatura'});
+  }
 });
 
 io.on('connection', (socket) => {
