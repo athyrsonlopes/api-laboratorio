@@ -1,45 +1,27 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const http = require('http');
-const socketIo = require('socket.io');
 const path = require('path');
 const fs = require('fs');
 
 const app = express();
 
-const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"] 
-  }
-});
-
 const authRoutes = require('./routes/authRoutes');
 const laboratorioRoutes = require('./routes/laboratorioRoutes');
+const Temperatura = require('./models/Temperatura');
+
+app.use(express.json());
+app.use(express.static('public'));
 
 
 app.get('/', (req, res) => res.send('Bem-vindo à API de Gerenciamento de Laboratórios!'));
-
-app.use(express.json());
-app.use('/uploads', express.static('uploads'));
-
-app.use((req, res, next) => {
-  req.io = io;
-  next();
-});
-
 app.use('/', authRoutes);
-app.use('/laboratorio', laboratorioRoutes); 
-
-let currentLabTemperature = 22.0;
-
+app.use('/laboratorio', laboratorioRoutes);
 
 app.get('/videoTutorial', (req, res) => {
-  const videoPath = path.resolve(__dirname, 'uploads', 'tutorial.mp4'); 
+  const videoPath = path.join(__dirname, 'uploads', 'tutorial.mp4'); // Usando path.join
   if (!fs.existsSync(videoPath)) {
-    return res.status(404).send('Ficheiro de vídeo tutorial não encontrado.');
+    return res.status(404).send('Arquivo de vídeo tutorial não encontrado.');
   }
 
   const stat = fs.statSync(videoPath);
@@ -70,8 +52,6 @@ app.get('/videoTutorial', (req, res) => {
   }
 });
 
-const Temperatura = require('./models/Temperatura');
-
 app.get('/temperaturaAtual', async (req, res) => {
   try {
     const ultimaLeitura = await Temperatura.findOne().sort({ timestamp: -1 });
@@ -89,23 +69,9 @@ app.get('/temperaturaAtual', async (req, res) => {
   }
 });
 
-io.on('connection', (socket) => {
-  console.log('Cliente conectado via WebSocket:', socket.id);
-
-  socket.on('sendTemperature', (data) => {
-    console.log(`Temperatura recebida do simulador: ${data.temperature}°C para ${data.labId}`);
-    currentLabTemperature = data.temperature; // Atualiza a temperatura global
-    socket.broadcast.emit('updateTemperature', data); 
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Cliente desconectado via WebSocket:', socket.id);
-  });
-});
-
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
-    server.listen(process.env.PORT, () =>
+    app.listen(process.env.PORT, () =>
       console.log(`Servidor rodando na porta ${process.env.PORT}`)
     );
   })

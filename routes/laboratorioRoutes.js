@@ -76,6 +76,6 @@ router.post('/bloquear/:id', auth, diaUtil, async (req, res) => {
   }
 });
 
-router.delete('excluir/:id', auth, diaUtil, excluir);
+router.delete('/excluir/:id', auth, diaUtil, excluir);
 
 module.exports = router;
