@@ -19,7 +19,7 @@ app.use('/', authRoutes);
 app.use('/laboratorio', laboratorioRoutes);
 
 app.get('/videoTutorial', (req, res) => {
-  const videoPath = path.join(__dirname, 'uploads', 'tutorial.mp4'); // Usando path.join
+  const videoPath = path.join(__dirname, 'uploads', 'tutorial.mp4');
   if (!fs.existsSync(videoPath)) {
     return res.status(404).send('Arquivo de vídeo tutorial não encontrado.');
   }
